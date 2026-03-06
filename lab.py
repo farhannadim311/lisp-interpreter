@@ -39,40 +39,38 @@ def tokenize(source):
     ['(', '(', 'parse', 'these', 'tokens', ')', 'here', ')']
     """
     res = []
-    build_digit = ""
     build_char = ""
     comment = False
     for idx, char in enumerate(source):
-        if(char.isdigit() == False and build_digit):
-            res.append(build_digit)
-            build_digit = ""
+        #what are the cases
+        #could be spaces or newlines
+        #could be a string
+        #could be a comment thats it
         if(char == ';'):
             comment = True
-            continue
-        if(char == '\n'):
-            comment = False
+        if(char == ' ' or char == '\n'):
+            if(char == '\n'):
+                comment = False
+            if(build_char):
+                res.append(build_char)
+                build_char = ""
             continue
         if(comment):
             continue
-        if(char == ' '):
-            continue
-        if((char == '-' and source[idx + 1].isdigit()) or (char == '-' and source[idx + 1] == '.')):
-            build_digit = build_digit + char
-            continue
-        if(char.isdigit() or char == '.'):
-            build_digit = build_digit + char
-            continue
-        if(char.isalpha()):
+        if(char == '('):
+            res.append(char)
+        elif(char == ')'):
+            if(build_char):
+                res.append(build_char)
+                build_char = ""
+            res.append(char)
+        else:
             build_char += char
-            continue
-        if(build_char and char.isalpha() == False):
-            res.append(build_char)
-            build_char = ""
-        res.append(char)
-    if(build_digit):
-        res.append(build_digit)
-    
+        
+    if(build_char):
+        res.append(build_char)
     return res
+
 
 
 # endregion
@@ -96,7 +94,34 @@ def parse(tokens):
     >>> parse(['(', '(', 'parse', 'these', 'tokens', ')', 'here', ')'])
     [['parse', 'these', 'tokens'], 'here']
     """
-    raise NotImplementedError
+    result = []
+    recursive_call = 0
+    def parse_expression(index, list_so_far): #example (['(', '+', '2', '(', '-', '5', '3', ')', '7', '8', ')'])
+        nonlocal recursive_call
+        parsed = number_or_symbol(tokens[index])
+        if(index == len(tokens)):
+            return list_so_far, index
+        if(parsed != '(' and parsed != ')'):
+            return parsed, index + 1
+        if(tokens[index] == '(' or tokens[index] == ')'):
+            if(tokens[index] == '('):
+                list_so_far = []
+
+            i = index + 1
+            while(i < len(tokens)):
+                char = tokens[i]
+                if(char != ')'):
+                    parse, idx = parse_expression(i , list_so_far)
+                    recursive_call += 1
+                    if(parse):
+                        list_so_far.append(parse)
+                    i = idx
+                if(char == ')'):
+                    return list_so_far, i + 1
+                
+
+    lst, idx = parse_expression(0, [])
+    return lst
 
 
 # endregion
@@ -162,13 +187,4 @@ if __name__ == "__main__":
         #SchemeREPL(sys.modules[__name__], verbose=True, repl_frame=None).cmdloop()
 
 # endregion
-    scheme_code = """
-;add the numbers 2 and 3
-(+ ; this expression
- 2     ; spans multiple
- 3  ; lines
-
-)
-"""
-
-    print(tokenize(scheme_code))
+    print(parse(['(', '+', '2', '(', '-', '5', '3', ')', '7', '8', ')']))
