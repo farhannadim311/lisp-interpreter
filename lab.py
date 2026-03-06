@@ -139,7 +139,30 @@ def evaluate(tree):
     >>> evaluate(['+', 3, ['-', 3, 1, 1], 2])
     6
     """
-    raise NotImplementedError
+    recursive_call = 0
+    op = ""
+    def eval(index, ans_so_far, t): #example (['+', 3, ['-', 3, 1, 1], 2])
+        nonlocal op
+        if(type(t) != list):
+            if(t in SCHEME_BUILTINS):
+                return SCHEME_BUILTINS[t], index + 1
+            elif(type(t) == int or type(t) == float):
+                return t, index + 1
+        else:
+            idx = 0
+            while(idx < len(t)):
+                recurse,idx = eval(idx, ans_so_far, t[idx])
+                if(recurse in SCHEME_BUILTINS.values()):
+                    op = recurse
+                else:
+                    if(op):
+                        ans_so_far = op(ans_so_far, recurse)
+        return ans_so_far, index
+    
+    lst, idx = eval(0, 0, tree)
+    return lst
+
+    
 
 
 # endregion
@@ -187,4 +210,4 @@ if __name__ == "__main__":
         #SchemeREPL(sys.modules[__name__], verbose=True, repl_frame=None).cmdloop()
 
 # endregion
-    print(parse(['(', '+', '2', '(', '-', '5', '3', ')', '7', '8', ')']))
+    print(evaluate(['*' , 3 , 2]))
